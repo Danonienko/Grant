@@ -6,9 +6,10 @@ import {
 	Routes,
 	SlashCommandBuilder
 } from "discord.js";
-import { lstat, readdir } from "fs/promises";
+import { readdir } from "fs/promises";
 import Grant from "index.js";
-import { CommandList, EventList, ICommand, IEvent } from "Types/Globals.js";
+import knex, { Knex } from "knex";
+import { ICommand, IEvent } from "Types/Globals.js";
 import { fileURLToPath } from "url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -16,11 +17,11 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 export default class Bot extends Client {
 	public readonly Grant: Grant;
 	public readonly REST: REST = new REST();
+	public readonly Knex: Knex;
+	public readonly Commands: Collection<string, ICommand> = new Collection();
+	public readonly Events: Collection<string, IEvent> = new Collection();
 
-	public Commands: CommandList = new Collection();
-	public Events: EventList = new Collection();
-
-	constructor(grant: Grant) {
+	public constructor(grant: Grant) {
 		super({
 			intents: [
 				"Guilds",
@@ -44,98 +45,95 @@ export default class Bot extends Client {
 		this.Grant = grant;
 		this.REST.setToken(this.Grant.Environment.TOKEN);
 
-		this.RegisterCommands();
-		this.RegisterEvents();
+		try {
+			this.Grant.Log.Info("Connecting to database...");
+
+			this.Knex = knex({
+				client: "better-sqlite3",
+				useNullAsDefault: true,
+				connection: {
+					filename: "./Data/Grant.sqlite"
+				}
+			});
+
+			this.Grant.Log.Info("Connection established.");
+		} catch (error) {
+			this.Grant.Log.Error(error);
+			throw error;
+		}
+
+		this._start();
+	}
+
+	private async _start(): Promise<void> {
+		await this.ReadEvents();
+		await this.RegisterEvents();
+		await this.LoadCommands();
 
 		this.login(this.Grant.Environment.TOKEN);
 	}
 
-	public async GetCommand(
-		commandName: string
-	): Promise<ICommand | undefined> {
-		let command: ICommand | undefined;
-
-		this.Commands.forEach((category) => {
-			command = category.get(commandName);
-		});
-
-		return command;
-	}
-
-	public async ReadCommands(): Promise<CommandList> {
-		console.log("Reading commands...");
-
-		const commandList: CommandList = new Collection();
-
+	public async LoadCommands(): Promise<void> {
 		try {
+			this.Grant.Log.Info("Loading commands...");
+
 			const categoryDirs = await readdir(`${__dirname}/Commands`);
 
 			for (const categoryDir of categoryDirs) {
-				const category = new Collection<string, ICommand>();
 				const commands = await readdir(
 					`${__dirname}/Commands/${categoryDir}`
 				);
 
 				for (const command of commands) {
-					const commandStat = await lstat(
-						`${__dirname}/Commands/${categoryDir}/${command}`
-					);
+					this.Grant.Log.Debug(`Loading '${command}' command`);
+
 					const commandClass = (
-						await import(
-							`./Commands/${categoryDir}/${command}${
-								(commandStat.isDirectory() && "/index.js") || ""
-							}`
-						)
+						await import(`./Commands/${categoryDir}/${command}`)
 					).default;
+
+					if (commandClass == undefined) continue;
+
 					const commandData: ICommand = new commandClass(this.Grant);
 
-					if (commandStat.isDirectory()) {
-						if (!commandData.SubCommands)
-							commandData.SubCommands = [];
-
-						commandData.IsIndexer = true;
-					}
-
-					category.set(commandData.Name, commandData);
+					this.Commands.set(commandData.Name, commandData);
 				}
-
-				commandList.set(categoryDir, category);
 			}
 
-			console.log("Read all commands.");
-
-			return commandList;
+			this.Grant.Log.Info("Commands loaded.");
 		} catch (error) {
-			console.error(error);
+			this.Grant.Log.Error(error);
 			throw error;
 		}
 	}
 
-	public async RegisterCommands(): Promise<void> {
+	public async DeployCommands(): Promise<void> {
 		try {
-			const commandList = await this.ReadCommands();
-			this.Commands = commandList;
+			this.Grant.Log.Info("Building commands...");
 
 			const parsedCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 
-			console.info("Building commands...");
+			let count = 0;
 
-			commandList.forEach((category, categoryName) => {
-				console.log(`Building '${categoryName}' command category`);
+			for (const command of this.Commands.values()) {
+				count += 1;
 
-				category.forEach((command) => {
-					console.log(`Building '${command.Name}' command`);
+				this.Grant.Log.Debug(
+					`Building '${command.Name}' command (${count}/${this.Commands.size})`
+				);
 
-					parsedCommands.push(
-						new SlashCommandBuilder()
-							.setName(command.Name)
-							.setDescription(command.Description)
-							.toJSON()
-					);
-				});
-			});
+				const slashCommand = new SlashCommandBuilder();
 
-			console.log("Registering commands...");
+				slashCommand.setName(command.Name);
+				slashCommand.setDescription(command.Description);
+
+				for (const option of command.Options || [])
+					slashCommand.options.push(option);
+
+				parsedCommands.push(slashCommand.toJSON());
+			}
+
+			this.Grant.Log.Info("Commands built.");
+			this.Grant.Log.Info("Deploying commands...");
 
 			this.REST.put(
 				Routes.applicationGuildCommands(
@@ -146,70 +144,90 @@ export default class Bot extends Client {
 					body: parsedCommands
 				}
 			);
-			console.info("Commands have been successfully registered!");
+
+			this.Grant.Log.Info("Commands deployed.");
 		} catch (error) {
-			console.error(error);
+			this.Grant.Log.Error(error);
 			throw error;
 		}
 	}
 
-	public async ReadEvents(): Promise<EventList> {
-		console.log("Reading events...");
+	public async DeleteAllCommands(): Promise<void> {
+		const route = Routes.applicationGuildCommands(
+			this.Grant.Environment.CLIENT,
+			this.Grant.Environment.GUILD
+		);
 
-		const eventList: EventList = new Collection();
+		const commands = (await this.REST.get(route)) as { id: string }[];
 
+		let count = 0;
+
+		this.Grant.Log.Info("Deleting commands...");
+
+		for (const command of commands) {
+			count += 1;
+
+			setTimeout(async () => {
+				await this.REST.delete(
+					Routes.applicationGuildCommand(
+						this.Grant.Environment.CLIENT,
+						this.Grant.Environment.GUILD,
+						command.id
+					)
+				);
+			}, 0.5);
+
+			this.Grant.Log.Debug(`Deleting... (${count}/${commands.length})`);
+		}
+
+		this.Grant.Log.Info("Commands deleted.");
+	}
+
+	public async ReadEvents(): Promise<void> {
 		try {
+			this.Grant.Log.Info("Reading events...");
+
 			const categoryDirs = await readdir(`${__dirname}/Events`);
 
 			for (const categoryDir of categoryDirs) {
-				const category = new Collection<string, IEvent>();
 				const events = await readdir(
 					`${__dirname}/Events/${categoryDir}`
 				);
 
 				for (const event of events) {
+					this.Grant.Log.Debug(`Reading '${event}' event`);
+
 					const eventClass = (
 						await import(`./Events/${categoryDir}/${event}`)
 					).default;
 
 					const eventData: IEvent = new eventClass(this.Grant);
 
-					category.set(eventData.Name, eventData);
+					this.Events.set(eventData.Name, eventData);
 				}
-
-				eventList.set(categoryDir, category);
 			}
+
+			this.Grant.Log.Info("Events read.");
 		} catch (error) {
-			console.log(error);
+			this.Grant.Log.Error(error);
 			throw error;
 		}
-
-		console.log("Read all events.");
-
-		return eventList;
 	}
 
 	public async RegisterEvents(): Promise<void> {
 		try {
-			const eventList = await this.ReadEvents();
-			this.Events = eventList;
+			this.Grant.Log.Info(`Registering events...`);
 
-			console.info(`Registering events...`);
+			for (const event of this.Events.values()) {
+				this.Grant.Log.Debug(`Registering '${event.Name}' event`);
 
-			eventList.forEach((category, categoryName) => {
-				console.info(`Registering '${categoryName}' event category`);
+				if (event.Once) this.once(event.Name, event.Execute);
+				else this.on(event.Name, event.Execute);
+			}
 
-				category.forEach((event) => {
-					console.log(`Registering '${event.Name}' event`);
-
-					if (event.Once) this.once(event.Name, event.Execute);
-					else this.on(event.Name, event.Execute);
-				});
-			});
-
-			console.info("Events have been successfully registered!");
+			this.Grant.Log.Info("Events registered.");
 		} catch (error) {
-			console.error(error);
+			this.Grant.Log.Error(error);
 			throw error;
 		}
 	}

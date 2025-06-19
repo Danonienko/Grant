@@ -12,7 +12,7 @@ export default class ReadyEvent implements IEvent {
 	}
 
 	public async Execute(client: Client) {
-		console.info(`Client ready! Logged in as ${client.user?.tag}`);
+		this.Grant.Log.Info(`Client ready! Logged in as ${client.user?.tag}`);
 
 		client.user?.setPresence({
 			status: "online",

@@ -18,19 +18,30 @@ export default class InteractionCreateEvent implements IEvent {
 	public async Execute(interaction: BaseInteraction) {
 		if (!interaction.isChatInputCommand()) return;
 
-		const command = await this.Grant.Bot.GetCommand(
-			interaction.commandName
-		);
-
-		if (!command)
-			return interaction.reply({
-				content: `No command matching \`${interaction.commandName}\` was found`
-			});
-
 		try {
+			this.Grant.Log.Debug(
+				`Interaction Caught: ${interaction.commandName}`
+			);
+
+			const command = this.Grant.Bot.Commands.find(
+				(command) => command.Name == interaction.commandName
+			);
+
+			if (!command) {
+				this.Grant.Log.Debug("Command not found");
+
+				return interaction.reply({
+					content: `No command matching \`${interaction.commandName}\` was found`
+				});
+			}
+
+			this.Grant.Log.Debug(`Command Found: ${command.Name}`);
+
 			await command.Execute(interaction);
+
+			this.Grant.Log.Debug(`Command Executed: ${command.Name}`);
 		} catch (error) {
-			console.error(error);
+			this.Grant.Log.Error(error);
 
 			const reply: InteractionReplyOptions = {
 				content: "There was an error while executing this command!",

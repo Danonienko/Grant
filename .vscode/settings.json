@@ -3,5 +3,15 @@
 		"codepaths",
 		"NFSF",
 		"nodenext"
+	],
+	"sqltools.useNodeRuntime": true,
+	"sqltools.connections": [
+		{
+			"previewLimit": 50,
+			"driver": "SQLite",
+			"name": "Grant",
+			"group": "Discord Bots",
+			"database": "database.db"
+		}
 	]
 }

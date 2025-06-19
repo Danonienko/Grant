@@ -1,4 +1,8 @@
-import { ChatInputCommandInteraction, Collection } from "discord.js";
+import {
+	ApplicationCommandOptionBase,
+	ChatInputCommandInteraction,
+	Collection
+} from "discord.js";
 import Grant from "index";
 
 export interface ICommand {
@@ -6,7 +10,9 @@ export interface ICommand {
 
 	readonly Name: Lowercase<string>;
 	readonly Description: string;
+	readonly Options?: ApplicationCommandOptionBase[];
 	readonly Developer?: boolean;
+
 	SubCommands?: ICommand[];
 	IsIndexer?: boolean;
 
@@ -15,12 +21,10 @@ export interface ICommand {
 }
 
 export interface IEvent {
-	readonly Name: Events;
 	readonly Grant: Grant;
+
+	readonly Name: Events;
 	readonly Once?: boolean;
 
 	Execute(...args: any[]);
 }
-
-export type CommandList = Collection<string, Collection<string, ICommand>>;
-export type EventList = Collection<string, Collection<string, IEvent>>;
