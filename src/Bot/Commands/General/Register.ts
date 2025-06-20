@@ -11,9 +11,7 @@ export default class RegisterCommand implements ICommand {
 
 	public async Execute(interaction: ChatInputCommandInteraction) {
 		return interaction.reply({
-			embeds: [
-				EmbedTemplates.CommandNotImplemented(interaction.commandName)
-			]
+			embeds: [EmbedTemplates.CommandNotImplemented()]
 		});
 	}
 }

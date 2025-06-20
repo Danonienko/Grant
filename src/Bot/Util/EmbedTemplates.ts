@@ -47,12 +47,11 @@ const EmbedTemplates = {
 			.setTimestamp()
 			.setFooter(FooterTemplates.Version);
 	},
-	CommandNotImplemented: (commandName: string) => {
+	CommandNotImplemented: () => {
 		return new EmbedBuilder()
 			.setTitle("Command Not Implemented")
 			.setDescription(
-				`Command \`${commandName}\` is not yet implemented. 
-				Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
+				`This command is not yet implemented. Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
 			)
 			.setColor(Colors.Yellow)
 			.setTimestamp()
