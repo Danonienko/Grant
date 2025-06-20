@@ -1,4 +1,4 @@
-import EmbedTemplates from "Bot/EmbedTemplates.js";
+import EmbedTemplates from "Bot/Util/EmbedTemplates.js";
 import { ChatInputCommandInteraction } from "discord.js";
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";

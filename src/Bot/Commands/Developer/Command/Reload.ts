@@ -1,4 +1,4 @@
-import EmbedTemplates from "Bot/EmbedTemplates.js";
+import EmbedTemplates from "Bot/Util/EmbedTemplates.js";
 import {
 	ApplicationCommandOptionBase,
 	ChatInputCommandInteraction,
