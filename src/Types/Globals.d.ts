@@ -12,9 +12,9 @@ export interface ICommand {
 	readonly Description: string;
 	readonly Options?: ApplicationCommandOptionBase[];
 	readonly Developer?: boolean;
+	readonly IsIndexer?: boolean;
 
 	SubCommands?: ICommand[];
-	IsIndexer?: boolean;
 
 	Execute(interaction: ChatInputCommandInteraction);
 	AutoComplete?(interaction: ChatInputCommandInteraction);

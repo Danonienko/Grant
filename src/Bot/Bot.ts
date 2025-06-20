@@ -148,7 +148,12 @@ export default class Bot extends Client {
 							const subCommandData: ICommand =
 								new subCommandClass(this.Grant);
 
-							if (subCommandData.IsIndexer) continue;
+							if (subCommandData.IsIndexer) {
+								this.Grant.Log.Debug(
+									`Skipped '${subCommand}' because it is an indexer`
+								);
+								continue;
+							}
 
 							commandData.SubCommands.push(subCommandData);
 						}
@@ -286,14 +291,6 @@ export default class Bot extends Client {
 		commandName: string
 	): Promise<[boolean, string]> {
 		try {
-			const command = this.Commands.get(commandName);
-
-			if (!command)
-				return [
-					false,
-					`No command under the name '${commandName}' been found.`
-				];
-
 			const apiCommands = (await this.REST.get(
 				Routes.applicationGuildCommands(
 					this.Grant.Environment.CLIENT,
@@ -301,7 +298,7 @@ export default class Bot extends Client {
 				)
 			)) as { name: string; id: Snowflake }[];
 
-			const apiCommand = apiCommands.find((c) => c.name == command.Name);
+			const apiCommand = apiCommands.find((c) => c.name == commandName);
 
 			if (!apiCommand)
 				return [false, "Could not find command in the API."];

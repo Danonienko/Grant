@@ -8,6 +8,15 @@ export const FooterTemplates = {
 export type FooterTemplates = typeof FooterTemplates;
 
 const EmbedTemplates = {
+	CommandNotImplemented: new EmbedBuilder()
+		.setTitle("Command Not Implemented")
+		.setDescription(
+			`This command is not yet implemented. 
+			Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
+		)
+		.setColor(Colors.Yellow)
+		.setTimestamp()
+		.setFooter(FooterTemplates.Version),
 	CommandError: (commandName: string, errorMessage: string) => {
 		return new EmbedBuilder()
 			.setTitle("Command Error")
@@ -44,16 +53,6 @@ const EmbedTemplates = {
 				} matching \`${commandName}\` was found`
 			)
 			.setColor(Colors.Orange)
-			.setTimestamp()
-			.setFooter(FooterTemplates.Version);
-	},
-	CommandNotImplemented: () => {
-		return new EmbedBuilder()
-			.setTitle("Command Not Implemented")
-			.setDescription(
-				`This command is not yet implemented. Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
-			)
-			.setColor(Colors.Yellow)
 			.setTimestamp()
 			.setFooter(FooterTemplates.Version);
 	},
