@@ -4,24 +4,23 @@ import {
 	REST,
 	RESTPostAPIApplicationCommandsJSONBody,
 	Routes,
-	SlashCommandBuilder
+	SlashCommandBuilder,
+	SlashCommandSubcommandBuilder,
+	Snowflake
 } from "discord.js";
-import { readdir } from "fs/promises";
+import { lstat, readdir } from "fs/promises";
 import Grant from "index.js";
-import knex, { Knex } from "knex";
 import { ICommand, IEvent } from "Types/Globals.js";
 import { fileURLToPath } from "url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default class Bot extends Client {
-	public readonly Grant: Grant;
 	public readonly REST: REST = new REST();
-	public readonly Knex: Knex;
 	public readonly Commands: Collection<string, ICommand> = new Collection();
 	public readonly Events: Collection<string, IEvent> = new Collection();
 
-	public constructor(grant: Grant) {
+	public constructor(public readonly Grant: Grant) {
 		super({
 			intents: [
 				"Guilds",
@@ -42,25 +41,9 @@ export default class Bot extends Client {
 			]
 		});
 
-		this.Grant = grant;
 		this.REST.setToken(this.Grant.Environment.TOKEN);
 
-		try {
-			this.Grant.Log.Info("Connecting to database...");
-
-			this.Knex = knex({
-				client: "better-sqlite3",
-				useNullAsDefault: true,
-				connection: {
-					filename: "./Data/Grant.sqlite"
-				}
-			});
-
-			this.Grant.Log.Info("Connection established.");
-		} catch (error) {
-			this.Grant.Log.Error(error);
-			throw error;
-		}
+		this.Grant.Log.Info("Connecting to database...");
 
 		this._start();
 	}
@@ -71,6 +54,36 @@ export default class Bot extends Client {
 		await this.LoadCommands();
 
 		this.login(this.Grant.Environment.TOKEN);
+	}
+
+	private async _buildCommand(
+		command: ICommand
+	): Promise<RESTPostAPIApplicationCommandsJSONBody> {
+		const slashCommand = new SlashCommandBuilder();
+
+		slashCommand.setName(command.Name);
+		slashCommand.setDescription(command.Description);
+
+		for (const option of command.Options ?? []) {
+			slashCommand.options.push(option);
+		}
+
+		if (command.SubCommands) {
+			for (const subCommand of command.SubCommands) {
+				const slashSubCommand = new SlashCommandSubcommandBuilder();
+
+				slashSubCommand.setName(subCommand.Name);
+				slashSubCommand.setDescription(subCommand.Description);
+
+				for (const subCommandOption of subCommand.Options ?? []) {
+					slashSubCommand.options.push(subCommandOption);
+				}
+
+				slashCommand.addSubcommand(slashSubCommand);
+			}
+		}
+
+		return slashCommand.toJSON();
 	}
 
 	public async LoadCommands(): Promise<void> {
@@ -87,13 +100,63 @@ export default class Bot extends Client {
 				for (const command of commands) {
 					this.Grant.Log.Debug(`Loading '${command}' command`);
 
+					const commandStat = await lstat(
+						`${__dirname}/Commands/${categoryDir}/${command}`
+					);
+
 					const commandClass = (
-						await import(`./Commands/${categoryDir}/${command}`)
+						await import(
+							`./Commands/${categoryDir}/${command}${
+								commandStat.isDirectory() ? "/index.js" : ""
+							}`
+						)
 					).default;
 
 					if (commandClass == undefined) continue;
 
 					const commandData: ICommand = new commandClass(this.Grant);
+
+					if (commandData.IsIndexer) {
+						this.Grant.Log.Debug(
+							`Detected '${commandData.Name}' as indexer.`
+						);
+
+						if (!commandData.SubCommands)
+							commandData.SubCommands = [];
+
+						const subCommands = await readdir(
+							`${__dirname}/Commands/${categoryDir}/${command}`
+						);
+
+						this.Grant.Log.Debug(
+							`Loading subcommands of '${commandData.Name}'`
+						);
+
+						for (const subCommand of subCommands) {
+							this.Grant.Log.Debug(
+								`Loading '${subCommand}' subcommand`
+							);
+
+							const subCommandClass = (
+								await import(
+									`./Commands/${categoryDir}/${command}/${subCommand}`
+								)
+							).default;
+
+							if (subCommandClass == undefined) continue;
+
+							const subCommandData: ICommand =
+								new subCommandClass(this.Grant);
+
+							if (subCommandData.IsIndexer) continue;
+
+							commandData.SubCommands.push(subCommandData);
+						}
+
+						this.Grant.Log.Debug(
+							`Subcommands of '${commandData.Name}' command loaded.`
+						);
+					}
 
 					this.Commands.set(commandData.Name, commandData);
 				}
@@ -106,7 +169,7 @@ export default class Bot extends Client {
 		}
 	}
 
-	public async DeployCommands(): Promise<void> {
+	public async DeployCommands(): Promise<[boolean, string]> {
 		try {
 			this.Grant.Log.Info("Building commands...");
 
@@ -121,15 +184,9 @@ export default class Bot extends Client {
 					`Building '${command.Name}' command (${count}/${this.Commands.size})`
 				);
 
-				const slashCommand = new SlashCommandBuilder();
+				const builtCommand = await this._buildCommand(command);
 
-				slashCommand.setName(command.Name);
-				slashCommand.setDescription(command.Description);
-
-				for (const option of command.Options || [])
-					slashCommand.options.push(option);
-
-				parsedCommands.push(slashCommand.toJSON());
+				parsedCommands.push(builtCommand);
 			}
 
 			this.Grant.Log.Info("Commands built.");
@@ -146,6 +203,118 @@ export default class Bot extends Client {
 			);
 
 			this.Grant.Log.Info("Commands deployed.");
+
+			return [true, "Success"];
+		} catch (error) {
+			this.Grant.Log.Error(error);
+			throw error;
+		}
+	}
+
+	public async DeployCommand(
+		commandName: string
+	): Promise<[boolean, string]> {
+		try {
+			const command = this.Commands.get(commandName);
+
+			if (!command)
+				return [
+					false,
+					`No command under the name '${commandName}' been found`
+				];
+
+			await this.REST.post(
+				Routes.applicationGuildCommands(
+					this.Grant.Environment.CLIENT,
+					this.Grant.Environment.GUILD
+				),
+				{
+					body: await this._buildCommand(command)
+				}
+			);
+
+			return [true, "Success"];
+		} catch (error) {
+			this.Grant.Log.Error(error);
+			throw error;
+		}
+	}
+
+	public async ReloadCommand(
+		commandName: string
+	): Promise<[boolean, string]> {
+		try {
+			const command = this.Commands.get(commandName);
+
+			if (!command)
+				return [
+					false,
+					`No command under the name '${commandName}' been found.`
+				];
+
+			const apiCommands = (await this.REST.get(
+				Routes.applicationGuildCommands(
+					this.Grant.Environment.CLIENT,
+					this.Grant.Environment.GUILD
+				)
+			)) as { id: Snowflake; name: string }[];
+
+			const apiCommand = apiCommands.find((c) => c.name == commandName);
+
+			if (!apiCommand)
+				return [false, "Could not find command in the API"];
+
+			await this.REST.patch(
+				Routes.applicationGuildCommand(
+					this.Grant.Environment.CLIENT,
+					this.Grant.Environment.GUILD,
+					apiCommand.id
+				),
+				{
+					body: await this._buildCommand(command)
+				}
+			);
+
+			return [true, "Success"];
+		} catch (error) {
+			this.Grant.Log.Error();
+			throw error;
+		}
+	}
+
+	public async DeleteCommand(
+		commandName: string
+	): Promise<[boolean, string]> {
+		try {
+			const command = this.Commands.get(commandName);
+
+			if (!command)
+				return [
+					false,
+					`No command under the name '${commandName}' been found.`
+				];
+
+			const apiCommands = (await this.REST.get(
+				Routes.applicationGuildCommands(
+					this.Grant.Environment.CLIENT,
+					this.Grant.Environment.GUILD
+				)
+			)) as { name: string; id: Snowflake }[];
+
+			const apiCommand = apiCommands.find((c) => c.name == command.Name);
+
+			if (!apiCommand)
+				return [false, "Could not find command in the API."];
+
+			await this.REST.delete(
+				Routes.applicationGuildCommand(
+					this.Grant.Environment.CLIENT,
+					this.Grant.Environment.GUILD,
+					apiCommand.id
+				)
+			);
+
+			return [true, "Success"];
 		} catch (error) {
 			this.Grant.Log.Error(error);
 			throw error;

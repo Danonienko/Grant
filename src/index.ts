@@ -7,6 +7,8 @@ class GrantObject {
 	public readonly Log: Logger;
 	public readonly Environment = configDotenv().parsed!;
 
+	public readonly BotDevelopers: string[] = ["427832787605782549"];
+
 	public constructor() {
 		this.Log = new Logger("Grant", this);
 		this.Bot = new Bot(this);

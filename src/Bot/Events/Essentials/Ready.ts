@@ -4,12 +4,9 @@ import { IEvent } from "Types/Globals.js";
 
 export default class ReadyEvent implements IEvent {
 	public readonly Name: Events = Events.ClientReady;
-	public readonly Grant: Grant;
 	public readonly Once?: boolean | undefined = true;
 
-	public constructor(grant: Grant) {
-		this.Grant = grant;
-	}
+	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute(client: Client) {
 		this.Grant.Log.Info(`Client ready! Logged in as ${client.user?.tag}`);
