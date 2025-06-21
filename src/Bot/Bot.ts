@@ -212,7 +212,7 @@ export default class Bot extends Client {
 			return [true, "Success"];
 		} catch (error) {
 			this.Grant.Log.Error(error);
-			throw error;
+			return [false, String(error)];
 		}
 	}
 

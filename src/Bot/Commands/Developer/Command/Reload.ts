@@ -41,7 +41,7 @@ export default class ReloadCommand implements ICommand {
 		else
 			return interaction.editReply({
 				embeds: [
-					EmbedTemplates.CommandInternalError(
+					EmbedTemplates.Error(
 						message,
 						"There was an error reloading a command"
 					)

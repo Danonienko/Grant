@@ -1,8 +1,11 @@
 {
 	"cSpell.words": [
 		"codepaths",
+		"HICOM",
+		"Maly",
 		"NFSF",
-		"nodenext"
+		"nodenext",
+		"ROBLOSECURITY"
 	],
 	"sqltools.useNodeRuntime": true,
 	"sqltools.connections": [
