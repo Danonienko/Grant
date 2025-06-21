@@ -1,5 +1,5 @@
-import Logger from "./Util/Log.js";
-import Bot from "./Bot/Bot.js";
+import Logger from "Util/Log.js";
+import Bot from "Bot/Bot.js";
 import { configDotenv } from "dotenv";
 
 class GrantObject {

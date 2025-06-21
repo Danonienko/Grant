@@ -1,7 +1,7 @@
-import EmbedTemplates from "Bot/Util/EmbedTemplates.js";
 import { ChatInputCommandInteraction } from "discord.js";
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
+import EmbedTemplates from "Util/EmbedTemplates.js";
 
 export default class RegisterCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "register";
