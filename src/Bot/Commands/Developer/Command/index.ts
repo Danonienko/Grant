@@ -11,6 +11,6 @@ export default class CommandIndexCommand implements ICommand {
 	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute() {
-		return Promise.resolve(undefined);
+		return Promise.resolve();
 	}
 }
