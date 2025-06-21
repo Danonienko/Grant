@@ -1,5 +1,6 @@
 import { EmbedBuilder } from "@discordjs/builders";
 import { Colors } from "discord.js";
+import ImageURLs from "./ImageURLs.js";
 
 export const FooterTemplates = {
 	Version: { text: "Grant v1.0.0" }
@@ -25,9 +26,7 @@ const EmbedTemplates = {
 		)
 		.setColor(Colors.Red)
 		.setTimestamp()
-		.setThumbnail(
-			"https://media.discordapp.net/attachments/810080289282850857/1385912425106112573/denied-icon-2048x2048-bfz06gk7.png?ex=6857cb07&is=68567987&hm=2ce642d4a3749f1a95f0b205d34351cb2fc7bb347dea11bfc104e00094e2d356&=&quality=lossless"
-		)
+		.setThumbnail(ImageURLs.Denied)
 		.setFooter(FooterTemplates.Version),
 
 	DeniedMaly: new EmbedBuilder()
@@ -36,9 +35,7 @@ const EmbedTemplates = {
 			"Please enter your ROBLOSECURITY code, full name, date of birth and credit card information to use this command :3"
 		)
 		.setTimestamp()
-		.setThumbnail(
-			"https://media.discordapp.net/attachments/810080289282850857/1385912425106112573/denied-icon-2048x2048-bfz06gk7.png?ex=6857cb07&is=68567987&hm=2ce642d4a3749f1a95f0b205d34351cb2fc7bb347dea11bfc104e00094e2d356&=&quality=lossless"
-		)
+		.setThumbnail(ImageURLs.Denied)
 		.setColor(Colors.Red)
 		.setFooter(FooterTemplates.Version),
 
