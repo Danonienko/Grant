@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import { lstat, readdir } from "fs/promises";
 import Grant from "index.js";
+import knex, { Knex } from "knex";
 import { ICommand, IEvent } from "Types/Globals.js";
 import { fileURLToPath } from "url";
 
@@ -17,6 +18,7 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default class Bot extends Client {
 	public readonly REST: REST = new REST();
+	public readonly Knex: Knex;
 	public readonly Commands: Collection<string, ICommand> = new Collection();
 	public readonly Events: Collection<string, IEvent> = new Collection();
 
@@ -43,17 +45,40 @@ export default class Bot extends Client {
 
 		this.REST.setToken(this.Grant.Environment.TOKEN);
 
-		this.Grant.Log.Info("Connecting to database...");
+		this.Knex = knex({
+			client: "mysql2",
+			connection: {
+				host: this.Grant.Environment.RDS_HOST,
+				port: Number(this.Grant.Environment.RDS_PORT),
+				user: this.Grant.Environment.RDS_USER,
+				password: this.Grant.Environment.RDS_PASSWORD,
+				database: this.Grant.Environment.RDS_DATABASE
+			}
+		});
 
 		this._start();
 	}
 
 	private async _start(): Promise<void> {
+		await this._testConnection();
 		await this.ReadEvents();
 		await this.RegisterEvents();
 		await this.LoadCommands();
 
 		this.login(this.Grant.Environment.TOKEN);
+	}
+
+	private async _testConnection(): Promise<void> {
+		try {
+			this.Grant.Log.Info("Connecting to database...");
+			await this.Knex.raw("SELECT 1 + 1 AS result");
+			this.Grant.Log.Info("Successfully connected to AWS RDS MySQL");
+		} catch (error) {
+			this.Grant.Log.Error(
+				`Failed to connect to AWS RDS MySQL: ${error}`
+			);
+			throw error;
+		}
 	}
 
 	private async _buildCommand(

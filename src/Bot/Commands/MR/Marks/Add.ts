@@ -29,8 +29,25 @@ export default class MarksAddCommand implements ICommand {
 		if (!RankStacks.MRAndHigher.includes(interaction.user.id))
 			return interaction.reply({ embeds: [EmbedTemplates.DeniedMaly] });
 
-		return interaction.reply({
-			embeds: [EmbedTemplates.CommandNotImplemented]
-		});
+		await interaction.deferReply();
+
+		const knex = this.Grant.Bot.Knex<Officer>("Officers");
+
+		const user = interaction.options.getUser("officer", true);
+		const amount = interaction.options.getNumber("amount", true);
+
+		const officer = await knex
+			.select()
+			.where("Discord_ID", user.id)
+			.first();
+
+		if (!officer) return interaction.editReply("Officer not found");
+
+		officer.Marks += amount;
+		await knex.update(officer);
+
+		return interaction.editReply(
+			`${user.displayName} now has ${officer.Marks} marks`
+		);
 	}
 }

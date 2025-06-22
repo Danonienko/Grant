@@ -5,7 +5,6 @@ import {
 } from "discord.js";
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
-import EmbedTemplates from "Util/EmbedTemplates.js";
 
 export default class MarksGetCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "get";
@@ -21,8 +20,21 @@ export default class MarksGetCommand implements ICommand {
 	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute(interaction: ChatInputCommandInteraction) {
-		return interaction.reply({
-			embeds: [EmbedTemplates.CommandNotImplemented]
-		});
+		await interaction.deferReply();
+
+		const knex = this.Grant.Bot.Knex<Officer>("Officers");
+
+		const user = interaction.options.getUser("officer", true);
+
+		const officer = await knex
+			.select()
+			.where("Discord_ID", user.id)
+			.first();
+
+		if (!officer) return interaction.editReply("Officer not found");
+
+		return interaction.editReply(
+			`${user.displayName} has **${officer.Marks}** marks`
+		);
 	}
 }

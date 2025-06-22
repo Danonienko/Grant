@@ -108,6 +108,7 @@
 		"node_modules"
 	],
 	"files": [
-		"src/Types/Globals.d.ts"
+		"src/Types/Globals.d.ts",
+		"src/Types/Tables.d.ts"
 	]
 }
