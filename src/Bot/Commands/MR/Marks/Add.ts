@@ -1,5 +1,3 @@
-import EmbedTemplates from "Bot/Util/EmbedTemplates.js";
-import { RankStacks } from "Bot/Util/Ranks.js";
 import {
 	ApplicationCommandOptionBase,
 	ChatInputCommandInteraction,
@@ -8,6 +6,8 @@ import {
 } from "discord.js";
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
+import EmbedTemplates from "Util/EmbedTemplates.js";
+import { RankStacks } from "Util/Ranks.js";
 
 export default class MarksAddCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "add";
