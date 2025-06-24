@@ -13,8 +13,15 @@ const EmbedTemplates = {
 		.setTitle("Command Not Implemented")
 		.setDescription(
 			`This command is not yet implemented. 
-			Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
+Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
 		)
+		.setColor(Colors.Yellow)
+		.setTimestamp()
+		.setFooter(FooterTemplates.Version),
+
+	SubCommandNotImplemented: new EmbedBuilder()
+		.setTitle("Subcommand Not Implemented")
+		.setDescription("This subcommand is not yet implemented.")
 		.setColor(Colors.Yellow)
 		.setTimestamp()
 		.setFooter(FooterTemplates.Version),
@@ -38,6 +45,19 @@ const EmbedTemplates = {
 		.setThumbnail(ImageURLs.Denied)
 		.setColor(Colors.Red)
 		.setFooter(FooterTemplates.Version),
+
+	OfficerNotFound: (username: string) => {
+		return new EmbedBuilder()
+			.setTitle("Officer Not Found")
+			.setDescription(
+				`Could not find ${username} in the database. 
+- If officer is part of NFSF, check if they are registered with \`/officer register\` command
+- If officer is registered but still cannot be found, contact Bot Developer`
+			)
+			.setTimestamp()
+			.setColor(Colors.Yellow)
+			.setFooter(FooterTemplates.Version);
+	},
 
 	CommandError: (commandName: string, errorMessage: string) => {
 		return new EmbedBuilder()

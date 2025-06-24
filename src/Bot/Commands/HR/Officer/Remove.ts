@@ -33,22 +33,25 @@ export default class OfficerRemoveCommand implements ICommand {
 
 		const user = interaction.options.getUser("officer", false);
 		const userId = interaction.options.getString("id", false);
-
-		const knex = this.Grant.Bot.Knex<Officer>("Officers");
-
 		const id = user?.id ?? userId;
 
 		if (!id) return interaction.editReply("No Officer or User ID provided");
 
-		const officer = await knex.select().where("Discord_ID", id).first();
+		const knex = this.Grant.Bot.Knex;
+		const officer = await knex<Officer>("Officers")
+			.select()
+			.where("Discord_ID", id)
+			.first();
 
 		if (!officer)
 			return interaction.editReply("No officer found in database");
 
-		await knex.delete();
+		await knex<Officer>("Officers")
+			.delete()
+			.where("OfficerID", officer.OfficerID);
 
 		if (
-			await this.Grant.Bot.Knex<Officer>("Officers")
+			await knex<Officer>("Officers")
 				.select()
 				.where("Discord_ID", id)
 				.first()

@@ -4,9 +4,3 @@ declare interface Officer {
 	Discord_ID: string;
 	Marks: number;
 }
-
-declare module "knex/types/tables" {
-	interface Tables {
-		Officers: Officer;
-	}
-}

@@ -6,6 +6,7 @@ import {
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
 import EmbedTemplates from "Util/EmbedTemplates.js";
+import { RankStacks } from "Util/Ranks.js";
 
 export default class OfficerBlacklistCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "blacklist";
@@ -20,6 +21,9 @@ export default class OfficerBlacklistCommand implements ICommand {
 	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute(interaction: ChatInputCommandInteraction) {
+		if (!RankStacks.HRAndHigher.includes(interaction.user.id))
+			return interaction.reply({ embeds: [EmbedTemplates.Denied] });
+
 		return interaction.reply({
 			embeds: [EmbedTemplates.CommandNotImplemented]
 		});

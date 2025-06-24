@@ -29,8 +29,28 @@ export default class MarksSubtractCommand implements ICommand {
 		if (!RankStacks.MRAndHigher.includes(interaction.user.id))
 			return interaction.reply({ embeds: [EmbedTemplates.DeniedMaly] });
 
-		return interaction.reply({
-			embeds: [EmbedTemplates.CommandNotImplemented]
-		});
+		await interaction.deferReply();
+
+		const user = interaction.options.getUser("officer", true);
+		const amount = interaction.options.getNumber("amount", true);
+		const knex = this.Grant.Bot.Knex;
+
+		const officer = await knex<Officer>("Officers")
+			.select()
+			.where("Discord_ID", user.id)
+			.first();
+
+		if (!officer)
+			return interaction.editReply({
+				embeds: [EmbedTemplates.OfficerNotFound(user.username)]
+			});
+
+		officer.Marks -= amount;
+
+		await knex<Officer>("Officers").update(officer);
+
+		return interaction.editReply(
+			`<@${interaction.user.id}> ${officer.Discord_Username} now has **${officer.Marks}** marks`
+		);
 	}
 }

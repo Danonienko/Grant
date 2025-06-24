@@ -31,23 +31,25 @@ export default class MarksAddCommand implements ICommand {
 
 		await interaction.deferReply();
 
-		const knex = this.Grant.Bot.Knex<Officer>("Officers");
-
+		const knex = this.Grant.Bot.Knex;
 		const user = interaction.options.getUser("officer", true);
 		const amount = interaction.options.getNumber("amount", true);
 
-		const officer = await knex
+		const officer = await knex<Officer>("Officers")
 			.select()
 			.where("Discord_ID", user.id)
 			.first();
 
-		if (!officer) return interaction.editReply("Officer not found");
+		if (!officer)
+			return interaction.editReply({
+				embeds: [EmbedTemplates.OfficerNotFound(user.username)]
+			});
 
 		officer.Marks += amount;
-		await knex.update(officer);
+		await knex<Officer>("Officers").update(officer);
 
 		return interaction.editReply(
-			`${user.displayName} now has ${officer.Marks} marks`
+			`<@${interaction.user.id}> ${officer.Discord_Username} now has **${officer.Marks}** marks`
 		);
 	}
 }

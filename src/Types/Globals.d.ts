@@ -3,7 +3,7 @@ import {
 	ChatInputCommandInteraction,
 	Collection
 } from "discord.js";
-import Grant from "index";
+import Grant from "index.js";
 
 export interface ICommand {
 	readonly Grant: Grant;
