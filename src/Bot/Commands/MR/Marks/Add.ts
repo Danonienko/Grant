@@ -7,7 +7,6 @@ import {
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
 import EmbedTemplates from "Util/EmbedTemplates.js";
-import { RankStacks } from "Util/Ranks.js";
 
 export default class MarksAddCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "add";
@@ -26,7 +25,7 @@ export default class MarksAddCommand implements ICommand {
 	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute(interaction: ChatInputCommandInteraction) {
-		if (!RankStacks.MRAndHigher.includes(interaction.user.id))
+		if (!this.Grant.Bot.GetRole(interaction, "MRAndHigher"))
 			return interaction.reply({ embeds: [EmbedTemplates.DeniedMaly] });
 
 		await interaction.deferReply();

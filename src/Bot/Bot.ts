@@ -1,8 +1,11 @@
 import {
+	ChatInputCommandInteraction,
 	Client,
 	Collection,
+	GuildMember,
 	REST,
 	RESTPostAPIApplicationCommandsJSONBody,
+	Role,
 	Routes,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
@@ -13,6 +16,7 @@ import Grant from "index.js";
 import knex, { Knex } from "knex";
 import { ICommand, IEvent } from "Types/Globals.js";
 import { fileURLToPath } from "url";
+import { RankStacks } from "Util/Ranks.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -109,6 +113,15 @@ export default class Bot extends Client {
 		}
 
 		return slashCommand.toJSON();
+	}
+
+	public GetRole(
+		interaction: ChatInputCommandInteraction,
+		rankStack: keyof RankStacks
+	): Role | undefined {
+		return (interaction.member as GuildMember).roles.cache.find((role) =>
+			RankStacks[rankStack].includes(role.id)
+		);
 	}
 
 	public async LoadCommands(): Promise<void> {
