@@ -44,7 +44,7 @@ export default class MarksSetCommand implements ICommand {
 
 		officer.Marks = value;
 
-		await knex<Officer>("Officers").update(officer);
+		await knex<Officer>("Officers").update("Marks", officer.Marks);
 
 		return interaction.reply(
 			`<@${interaction.user.id}> ${officer.Discord_Username} marks are set to **${officer.Marks}**`

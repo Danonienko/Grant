@@ -45,7 +45,7 @@ export default class MarksAddCommand implements ICommand {
 			});
 
 		officer.Marks += amount;
-		await knex<Officer>("Officers").update(officer);
+		await knex<Officer>("Officers").update("Marks", officer.Marks);
 
 		return interaction.editReply(
 			`<@${interaction.user.id}> ${officer.Discord_Username} now has **${officer.Marks}** marks`
