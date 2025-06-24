@@ -20,15 +20,17 @@ export default class OfficerRegisterCommand implements ICommand {
 	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute(interaction: ChatInputCommandInteraction) {
-		if (!this.Grant.Bot.GetRole(interaction, "LRAndHigher"))
-			return interaction.reply({ embeds: [EmbedTemplates.Denied] });
-
 		await interaction.deferReply();
 
 		const knex = this.Grant.Bot.Knex;
 		const user = interaction.options.getUser("user", false);
 
 		if (!user) {
+			if (!this.Grant.Bot.GetRole(interaction, "LRAndHigher"))
+				return interaction.editReply({
+					embeds: [EmbedTemplates.Denied]
+				});
+
 			if (
 				await knex<Officer>("Officers")
 					.select()
@@ -45,6 +47,9 @@ export default class OfficerRegisterCommand implements ICommand {
 
 			return interaction.editReply("Successfully registered");
 		}
+
+		if (!this.Grant.Bot.GetRole(interaction, "HRAndHigher"))
+			return interaction.editReply({ embeds: [EmbedTemplates.Denied] });
 
 		if (
 			await knex<Officer>("Officers")
