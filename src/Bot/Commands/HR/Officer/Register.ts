@@ -14,7 +14,7 @@ export default class OfficerRegisterCommand implements ICommand {
 		new SlashCommandUserOption()
 			.setName("user")
 			.setDescription("The user to register into NFSF database")
-			.setRequired(true)
+			.setRequired(false)
 	];
 
 	public constructor(public readonly Grant: Grant) {}
@@ -26,7 +26,25 @@ export default class OfficerRegisterCommand implements ICommand {
 		await interaction.deferReply();
 
 		const knex = this.Grant.Bot.Knex;
-		const user = interaction.options.getUser("user", true);
+		const user = interaction.options.getUser("user", false);
+
+		if (!user) {
+			if (
+				await knex<Officer>("Officers")
+					.select()
+					.where("Discord_ID", interaction.user.id)
+			)
+				return interaction.editReply(
+					"WHAT IS YOUR MAJOR MALFUNCTION, NUMBNUTS? YOU'VE ALREADY REGISTERED. YOU WORTHLESS PIECE OF SHIT."
+				);
+
+			await knex<Officer>("Officers").insert({
+				Discord_Username: interaction.user.username,
+				Discord_ID: interaction.user.id
+			});
+
+			return interaction.editReply("Successfully registered");
+		}
 
 		if (
 			await knex<Officer>("Officers")
