@@ -35,6 +35,7 @@ export default class OfficerRegisterCommand implements ICommand {
 				await knex<Officer>("Officers")
 					.select()
 					.where("Discord_ID", interaction.user.id)
+					.first()
 			)
 				return interaction.editReply(
 					"WHAT IS YOUR MAJOR MALFUNCTION, NUMBNUTS? YOU'VE ALREADY REGISTERED. YOU WORTHLESS PIECE OF SHIT."
