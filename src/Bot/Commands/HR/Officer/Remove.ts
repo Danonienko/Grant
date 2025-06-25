@@ -57,6 +57,8 @@ export default class OfficerRemoveCommand implements ICommand {
 		)
 			return "Could not remove officer from database";
 
-		return interaction.editReply("Successfully removed Officer");
+		return interaction.editReply(
+			`Successfully removed ${officer.Discord_Username} from NFSF database`
+		);
 	}
 }
