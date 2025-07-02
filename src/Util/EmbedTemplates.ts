@@ -104,9 +104,7 @@ Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
 	Error: (errorMessage: string, description?: string) => {
 		return new EmbedBuilder()
 			.setTitle("Error")
-			.setDescription(
-				description ? description : "The command encountered an error"
-			)
+			.setDescription(description ?? "The command encountered an error")
 			.addFields([
 				{ name: "Message", value: `\`\`\`${errorMessage}\`\`\`` }
 			])
@@ -118,9 +116,7 @@ Usually, it should not be deployed, so I suggest you to ping a Bot Developer.`
 	Success: (description?: string, message?: string) => {
 		return new EmbedBuilder()
 			.setTitle("Success")
-			.setDescription(
-				description ? description : "Command executed successfully"
-			)
+			.setDescription(description ?? "Command executed successfully")
 			.addFields(
 				message
 					? [{ name: "Message", value: `\`\`\`${message}\`\`\`` }]

@@ -1,9 +1,9 @@
-import { ActivityType, Client, Events } from "discord.js";
+import { ActivityType, Client, ClientEvents } from "discord.js";
 import Grant from "index.js";
 import { IEvent } from "Types/Globals.js";
 
 export default class ReadyEvent implements IEvent {
-	public readonly Name: Events = Events.ClientReady;
+	public readonly Name: keyof ClientEvents = "ready";
 	public readonly Once?: boolean | undefined = true;
 
 	public constructor(public readonly Grant: Grant) {}
