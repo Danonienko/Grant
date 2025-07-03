@@ -50,13 +50,16 @@ export default class Bot extends Client {
 		this.REST.setToken(this.Grant.Environment.TOKEN);
 
 		this.Knex = knex({
-			client: "mysql2",
+			client: "better-sqlite3",
 			connection: {
-				host: this.Grant.Environment.RDS_HOST,
-				port: Number(this.Grant.Environment.RDS_PORT),
-				user: this.Grant.Environment.RDS_USER,
-				password: this.Grant.Environment.RDS_PASSWORD,
-				database: this.Grant.Environment.RDS_DATABASE
+				filename: "src/Data/GrantDB.sqlite"
+			},
+			useNullAsDefault: true,
+			migrations: {
+				directory: "src/Data/Migrations"
+			},
+			seeds: {
+				directory: "src/Data/Seeds"
 			}
 		});
 
@@ -76,7 +79,7 @@ export default class Bot extends Client {
 		try {
 			this.Grant.Log.Info("Connecting to database...");
 			await this.Knex.raw("SELECT 1 + 1 AS result");
-			this.Grant.Log.Info("Successfully connected to AWS RDS MySQL");
+			this.Grant.Log.Info("Successfully connected to SQLite Database");
 		} catch (error) {
 			this.Grant.Log.Error(
 				`Failed to connect to AWS RDS MySQL: ${error}`
