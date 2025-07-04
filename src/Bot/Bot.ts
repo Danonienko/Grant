@@ -52,15 +52,9 @@ export default class Bot extends Client {
 		this.Knex = knex({
 			client: "better-sqlite3",
 			connection: {
-				filename: "src/Data/GrantDB.sqlite"
+				filename: this.Grant.Environment.DATABASE_URL
 			},
 			useNullAsDefault: true,
-			migrations: {
-				directory: "src/Data/Migrations"
-			},
-			seeds: {
-				directory: "src/Data/Seeds"
-			}
 		});
 
 		this._start();

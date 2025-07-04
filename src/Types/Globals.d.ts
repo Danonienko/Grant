@@ -29,3 +29,11 @@ export interface IEvent {
 
 	Execute(...args: any[]);
 }
+
+export type Environment = {
+	TOKEN: string;
+	CLIENT: string;
+	GUILD: string;
+	ENVIRONMENT: string;
+	DATABASE_URL: string;
+};

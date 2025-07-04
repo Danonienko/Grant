@@ -6,6 +6,8 @@
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"build": "tsc && npx tsc-alias",
+		"dock": "docker build -t grant:dev .",
+		"containerize": "docker run -d --name Grant-Alpha --env-file .env grant:dev",
 		"start": "node ."
 	},
 	"keywords": [],
