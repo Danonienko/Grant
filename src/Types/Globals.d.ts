@@ -1,6 +1,7 @@
 import {
 	ApplicationCommandOptionBase,
 	ChatInputCommandInteraction,
+	ClientEvents,
 	Collection
 } from "discord.js";
 import Grant from "index.js";
@@ -23,8 +24,16 @@ export interface ICommand {
 export interface IEvent {
 	readonly Grant: Grant;
 
-	readonly Name: Events;
+	readonly Name: keyof ClientEvents;
 	readonly Once?: boolean;
 
 	Execute(...args: any[]);
 }
+
+export type Environment = {
+	TOKEN: string;
+	CLIENT: string;
+	GUILD: string;
+	ENVIRONMENT: string;
+	DATABASE_URL: string;
+};

@@ -1,12 +1,13 @@
-import { BaseInteraction, Events } from "discord.js";
+import { BaseInteraction, ClientEvents } from "discord.js";
 import Grant from "index.js";
 import { IEvent } from "Types/Globals.js";
 import EmbedTemplates from "Util/EmbedTemplates.js";
 
 export default class InteractionCreateEvent implements IEvent {
-	public readonly Name: Events = Events.InteractionCreate;
+	public readonly Name: keyof ClientEvents = "interactionCreate";
 
 	public constructor(public readonly Grant: Grant) {}
+	Once?: boolean | undefined;
 
 	public async Execute(interaction: BaseInteraction) {
 		if (!interaction.isChatInputCommand()) return;
