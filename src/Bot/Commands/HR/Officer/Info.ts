@@ -28,7 +28,7 @@ export default class OfficerInfoCommand implements ICommand {
 		const knex = this.Grant.Bot.Knex;
 
 		if (!user) {
-			const officer = await knex<Officer>("Officers")
+			const officer = await knex<Officers>("Officers")
 				.select()
 				.where("Discord_ID", interaction.user.id)
 				.first();
@@ -55,7 +55,7 @@ export default class OfficerInfoCommand implements ICommand {
 			});
 		}
 
-		const officer = await knex<Officer>("Officers")
+		const officer = await knex<Officers>("Officers")
 			.select()
 			.where("Discord_ID", user.id)
 			.first();

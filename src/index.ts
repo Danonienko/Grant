@@ -18,18 +18,18 @@ class GrantObject {
 
 	private _ParseEnvironment(): Environment {
 		console.info("Parsing environment...");
-		const dotEnvConfig = configDotenv();
 
-		const parsedEnv = dotEnvConfig.parsed as Environment;
+		let env = process.env as Environment;
 
-		if (!parsedEnv.ENVIRONMENT) {
-			const processEnv = process.env as Environment;
-			console.log("Process Environment:", processEnv.ENVIRONMENT);
-			return processEnv;
+		if (env.ENVIRONMENT !== "production") {
+			const parsedEnv = configDotenv().parsed as Environment;
+			console.info("Current Environment:", parsedEnv.ENVIRONMENT);
+			return parsedEnv;
 		}
 
-		console.log("DotEnv Environment:", parsedEnv.ENVIRONMENT);
-		return parsedEnv;
+		console.info("Current Environment:", env.ENVIRONMENT);
+		
+		return env;
 	}
 }
 

@@ -27,7 +27,7 @@ export default class MarksGetCommand implements ICommand {
 		const user = interaction.options.getUser("officer", false);
 
 		if (!user) {
-			const officer = await knex<Officer>("Officers")
+			const officer = await knex<Officers>("Officers")
 				.select()
 				.where("Discord_ID", interaction.user.id)
 				.first();
@@ -40,7 +40,7 @@ export default class MarksGetCommand implements ICommand {
 			);
 		}
 
-		const officer = await knex<Officer>("Officers")
+		const officer = await knex<Officers>("Officers")
 			.select()
 			.where("Discord_ID", user.id)
 			.first();

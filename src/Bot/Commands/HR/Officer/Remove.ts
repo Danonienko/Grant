@@ -6,11 +6,12 @@ import {
 } from "discord.js";
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
-import EmbedTemplates from "Util/EmbedTemplates.js";
+import { Ranks } from "Util/Ranks.js";
 
 export default class OfficerRemoveCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "remove";
 	public readonly Description: string = "Remove an officer from NFSF";
+	public readonly Roles?: string[] | undefined = Ranks.HRAndHigher;
 	public readonly Options?: ApplicationCommandOptionBase[] | undefined = [
 		new SlashCommandUserOption()
 			.setName("officer")
@@ -25,9 +26,6 @@ export default class OfficerRemoveCommand implements ICommand {
 	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute(interaction: ChatInputCommandInteraction) {
-		if (!this.Grant.Bot.GetRole(interaction, "HRAndHigher"))
-			return interaction.reply({ embeds: [EmbedTemplates.Denied] });
-
 		await interaction.deferReply();
 
 		const user = interaction.options.getUser("officer", false);
@@ -37,7 +35,7 @@ export default class OfficerRemoveCommand implements ICommand {
 		if (!id) return interaction.editReply("No Officer or User ID provided");
 
 		const knex = this.Grant.Bot.Knex;
-		const officer = await knex<Officer>("Officers")
+		const officer = await knex<Officers>("Officers")
 			.select()
 			.where("Discord_ID", id)
 			.first();
@@ -45,12 +43,12 @@ export default class OfficerRemoveCommand implements ICommand {
 		if (!officer)
 			return interaction.editReply("No officer found in database");
 
-		await knex<Officer>("Officers")
+		await knex<Officers>("Officers")
 			.delete()
 			.where("OfficerID", officer.OfficerID);
 
 		if (
-			await knex<Officer>("Officers")
+			await knex<Officers>("Officers")
 				.select()
 				.where("Discord_ID", id)
 				.first()

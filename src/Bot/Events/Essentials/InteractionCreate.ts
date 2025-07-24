@@ -7,17 +7,16 @@ export default class InteractionCreateEvent implements IEvent {
 	public readonly Name: keyof ClientEvents = "interactionCreate";
 
 	public constructor(public readonly Grant: Grant) {}
-	Once?: boolean | undefined;
 
-	public async Execute(interaction: BaseInteraction) {
+	public async Execute(interaction: BaseInteraction<"cached">) {
 		if (!interaction.isChatInputCommand()) return;
 
 		try {
 			const commandName = interaction.commandName;
 
-			this.Grant.Log.Debug(`Interaction Caught: ${commandName}`);
+			this.Grant.Log.Debug(`Interaction Created: ${commandName}`);
 
-			const command = this.Grant.Bot.Commands.get(commandName);
+			let command = this.Grant.Bot.Commands.get(commandName);
 
 			if (!command) {
 				this.Grant.Log.Warn("Command not found");
@@ -29,14 +28,6 @@ export default class InteractionCreateEvent implements IEvent {
 
 			this.Grant.Log.Debug(`Command Found: ${command.Name}`);
 
-			if (
-				command.Developer &&
-				!this.Grant.BotDevelopers.includes(interaction.user.id)
-			)
-				return interaction.reply({
-					content: "This is a developer command, shoo!"
-				});
-
 			if (command.IsIndexer) {
 				this.Grant.Log.Debug(`Detected '${command.Name}' as indexer`);
 
@@ -44,11 +35,11 @@ export default class InteractionCreateEvent implements IEvent {
 
 				this.Grant.Log.Debug(`Found Subcommand: ${subCommandName}`);
 
-				const subCommand = command.SubCommands?.find(
+				command = command.SubCommands?.find(
 					(subCommand) => subCommand.Name == subCommandName
 				);
 
-				if (!subCommand) {
+				if (!command) {
 					this.Grant.Log.Warn("Subcommand not found");
 
 					return interaction.reply({
@@ -57,13 +48,23 @@ export default class InteractionCreateEvent implements IEvent {
 						]
 					});
 				}
-
-				await subCommand.Execute(interaction);
-
-				return this.Grant.Log.Debug(
-					`Subcommand Executed: ${subCommandName}`
-				);
 			}
+
+			if (
+				command.Developer &&
+				!this.Grant.BotDevelopers.includes(interaction.user.id)
+			)
+				return interaction.reply({
+					content: "This is a developer command, shoo!"
+				});
+
+			if (
+				command.Roles &&
+				!this.Grant.Bot.HasRole(interaction.member, command.Roles)
+			)
+				return interaction.reply({
+					embeds: [EmbedTemplates.Denied]
+				});
 
 			await command.Execute(interaction);
 

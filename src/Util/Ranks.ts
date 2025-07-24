@@ -8,7 +8,7 @@ export const RankGroups = {
 
 export type RankGroups = typeof RankGroups;
 
-export const RankStacks = {
+export const Ranks = {
 	LRAndHigher: RankGroups.LR.concat(
 		RankGroups.MR,
 		RankGroups.HR,
@@ -23,4 +23,4 @@ export const RankStacks = {
 	HRAndHigher: RankGroups.HR.concat(RankGroups.HICOM, RankGroups.DEV)
 } as const;
 
-export type RankStacks = typeof RankStacks;
+export type Ranks = typeof Ranks;

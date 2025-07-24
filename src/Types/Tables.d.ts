@@ -1,4 +1,4 @@
-declare interface Officer {
+declare interface Officers {
 	OfficerID: number;
 	Discord_Username: string;
 	Discord_ID: string;
@@ -6,10 +6,9 @@ declare interface Officer {
 }
 
 declare interface Events {
-	EventID: number;
-	EventType: string;
-	Host: string;
-	Host_DiscordID: string;
-	Epoch: string;
-	IsConcluded: boolean;
+	EventID: string;
+	HostName: string;
+	EventName: string;
+	Timestamp: number;
+	ErrorMessage: string;
 }

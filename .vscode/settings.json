@@ -18,5 +18,13 @@
 			"group": "Discord Bots",
 			"database": "database.db"
 		}
+	],
+	"json.schemas": [
+		{
+			"fileMatch": [
+				"GrantConfig.json"
+			],
+			"url": "/GrantConfig.schema.json"
+		}
 	]
 }

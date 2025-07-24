@@ -7,10 +7,12 @@ import {
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
 import EmbedTemplates from "Util/EmbedTemplates.js";
+import { Ranks } from "Util/Ranks.js";
 
 export default class MarksSubtractCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "subtract";
 	public readonly Description: string = "Take marks from the officer";
+	public readonly Roles?: string[] | undefined = Ranks.MRAndHigher;
 	public readonly Options?: ApplicationCommandOptionBase[] | undefined = [
 		new SlashCommandUserOption()
 			.setName("officer")
@@ -25,16 +27,13 @@ export default class MarksSubtractCommand implements ICommand {
 	public constructor(public readonly Grant: Grant) {}
 
 	public async Execute(interaction: ChatInputCommandInteraction) {
-		if (!this.Grant.Bot.GetRole(interaction, "MRAndHigher"))
-			return interaction.reply({ embeds: [EmbedTemplates.DeniedMaly] });
-
 		await interaction.deferReply();
 
 		const user = interaction.options.getUser("officer", true);
 		const amount = interaction.options.getNumber("amount", true);
 		const knex = this.Grant.Bot.Knex;
 
-		const officer = await knex<Officer>("Officers")
+		const officer = await knex<Officers>("Officers")
 			.select()
 			.where("Discord_ID", user.id)
 			.first();
@@ -46,7 +45,7 @@ export default class MarksSubtractCommand implements ICommand {
 
 		officer.Marks -= amount;
 
-		await knex<Officer>("Officers")
+		await knex<Officers>("Officers")
 			.update("Marks", officer.Marks)
 			.where("Discord_ID", officer.Discord_ID);
 

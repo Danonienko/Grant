@@ -1,22 +1,19 @@
 import {
-	ChatInputCommandInteraction,
 	Client,
 	Collection,
 	GuildMember,
 	REST,
 	RESTPostAPIApplicationCommandsJSONBody,
-	Role,
 	Routes,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	Snowflake
 } from "discord.js";
-import { lstat, readdir } from "fs/promises";
+import { lstat, readdir, readFile, writeFile } from "fs/promises";
 import Grant from "index.js";
 import knex, { Knex } from "knex";
 import { ICommand, IEvent } from "Types/Globals.js";
 import { fileURLToPath } from "url";
-import { RankStacks } from "Util/Ranks.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -54,7 +51,7 @@ export default class Bot extends Client {
 			connection: {
 				filename: this.Grant.Environment.DATABASE_URL
 			},
-			useNullAsDefault: true,
+			useNullAsDefault: true
 		});
 
 		this._start();
@@ -76,7 +73,7 @@ export default class Bot extends Client {
 			this.Grant.Log.Info("Successfully connected to SQLite Database");
 		} catch (error) {
 			this.Grant.Log.Error(
-				`Failed to connect to AWS RDS MySQL: ${error}`
+				`Failed to connect to SQLite Database: ${error}`
 			);
 			throw error;
 		}
@@ -112,13 +109,55 @@ export default class Bot extends Client {
 		return slashCommand.toJSON();
 	}
 
-	public GetRole(
-		interaction: ChatInputCommandInteraction,
-		rankStack: keyof RankStacks
-	): Role | undefined {
-		return (interaction.member as GuildMember).roles.cache.find((role) =>
-			RankStacks[rankStack].includes(role.id)
+	public async ReadConfig(): Promise<GrantConfig> {
+		try {
+			const rawData = await readFile(
+				this.Grant.Environment.CONFIG_URL,
+				"utf-8"
+			);
+			return JSON.parse(rawData) as GrantConfig;
+		} catch (error) {
+			this.Grant.Log.Error(`Error reading config file: ${error}`);
+			throw error;
+		}
+	}
+
+	public async WriteConfig(config: GrantConfig): Promise<void> {
+		try {
+			await writeFile(
+				this.Grant.Environment.CONFIG_URL,
+				JSON.stringify(config, null, 2),
+				"utf-8"
+			);
+			this.Grant.Log.Info("Config file updated successfully");
+		} catch (error) {
+			this.Grant.Log.Error(`Error writing config file: ${error}`);
+			throw error;
+		}
+	}
+
+	public HasRole(guildMember: GuildMember, roles: string[]): boolean {
+		this.Grant.Log.Debug(`Command access restricted by role`);
+
+		const role = guildMember.roles.cache.find((role) => {
+			roles.includes(role.id);
+		});
+
+		if (role) {
+			this.Grant.Log.Debug("Guild Member has the role, access granted");
+			return true;
+		}
+
+		if (this.Grant.BotDevelopers.includes(guildMember.id)) {
+			this.Grant.Log.Debug("Bot Developer detected, access granted");
+			return true;
+		}
+
+		this.Grant.Log.Debug(
+			"Guild Member doesn't match any roles, access denied"
 		);
+
+		return false;
 	}
 
 	public async LoadCommands(): Promise<void> {

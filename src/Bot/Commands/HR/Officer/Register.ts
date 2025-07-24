@@ -6,10 +6,12 @@ import {
 import Grant from "index.js";
 import { ICommand } from "Types/Globals.js";
 import EmbedTemplates from "Util/EmbedTemplates.js";
+import { Ranks } from "Util/Ranks.js";
 
 export default class OfficerRegisterCommand implements ICommand {
 	public readonly Name: Lowercase<string> = "register";
 	public readonly Description: string = "Register yourself within NFSF";
+	public readonly Roles?: string[] | undefined = Ranks.LRAndHigher;
 	public readonly Options?: ApplicationCommandOptionBase[] | undefined = [
 		new SlashCommandUserOption()
 			.setName("user")
@@ -19,20 +21,15 @@ export default class OfficerRegisterCommand implements ICommand {
 
 	public constructor(public readonly Grant: Grant) {}
 
-	public async Execute(interaction: ChatInputCommandInteraction) {
+	public async Execute(interaction: ChatInputCommandInteraction<"cached">) {
 		await interaction.deferReply();
 
 		const knex = this.Grant.Bot.Knex;
 		const user = interaction.options.getUser("user", false);
 
 		if (!user) {
-			if (!this.Grant.Bot.GetRole(interaction, "LRAndHigher"))
-				return interaction.editReply({
-					embeds: [EmbedTemplates.Denied]
-				});
-
 			if (
-				await knex<Officer>("Officers")
+				await knex<Officers>("Officers")
 					.select()
 					.where("Discord_ID", interaction.user.id)
 					.first()
@@ -41,7 +38,7 @@ export default class OfficerRegisterCommand implements ICommand {
 					"WHAT IS YOUR MAJOR MALFUNCTION, NUMBNUTS? YOU'VE ALREADY REGISTERED. YOU WORTHLESS PIECE OF SHIT."
 				);
 
-			await knex<Officer>("Officers").insert({
+			await knex<Officers>("Officers").insert({
 				Discord_Username: interaction.user.username,
 				Discord_ID: interaction.user.id
 			});
@@ -49,11 +46,11 @@ export default class OfficerRegisterCommand implements ICommand {
 			return interaction.editReply("Successfully registered");
 		}
 
-		if (!this.Grant.Bot.GetRole(interaction, "HRAndHigher"))
+		if (!this.Grant.Bot.HasRole(interaction.member, Ranks.HRAndHigher))
 			return interaction.editReply({ embeds: [EmbedTemplates.Denied] });
 
 		if (
-			await knex<Officer>("Officers")
+			await knex<Officers>("Officers")
 				.select()
 				.where("Discord_ID", user.id)
 				.first()
@@ -62,12 +59,12 @@ export default class OfficerRegisterCommand implements ICommand {
 				`${user.username} is already registered you fool.`
 			);
 
-		await knex<Officer>("Officers").insert({
+		await knex<Officers>("Officers").insert({
 			Discord_Username: user.username,
 			Discord_ID: user.id
 		});
 
-		const newOfficer = await knex<Officer>("Officers")
+		const newOfficer = await knex<Officers>("Officers")
 			.select()
 			.where("Discord_ID", user.id)
 			.first();
